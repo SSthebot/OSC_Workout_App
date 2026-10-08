@@ -90,3 +90,23 @@ Congratulations, you have now setup an API key.
 
 For current website deployment you can follow the below link to check it out
 [deployed Site](https://ufosc.github.io/OSC_Workout_App) 
+
+## Past workout sessions
+
+Log in with a username, then choose **Begin Workout**. Enter a session name (for
+example, Leg day), its date, and each exercise's sets, weights, and reps. Select lb
+or kg and optionally record your body weight. Use **Finish and save workout** to
+save the session and open its date in **Past sessions**. Earlier dates can be used
+to backfill workouts; future dates are rejected.
+
+Open **Previous Workout** on Home or **Past sessions** in navigation to browse the
+monthly calendar. Workout names appear on their dates; selecting a day displays
+all sessions and their exercise/set details. Previous/next month and Today controls
+let you navigate the calendar, including days without workouts.
+
+The calendar works locally without a calendar API or API key. History is stored
+in browser localStorage per normalized username, including the weight unit and a
+snapshot of every set. It persists across reloads on the same browser but does not
+sync between devices. Clearing browser data removes it. Usernames are local
+profiles, not authenticated accounts. Storage errors are displayed without
+clearing the workout form or overwriting unreadable history.

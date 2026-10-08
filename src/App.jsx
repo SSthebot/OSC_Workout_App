@@ -6,6 +6,8 @@ import Signup from './Components/Signup';
 import Brainrot from "./Components/Brainrot";
 import Home from './Pages/Home';
 import Session from './Components/Session';
+import WorkoutHistory from './Components/WorkoutHistory';
+import Nutrition from './Components/Nutrition';
 
 const THEMES = ['dark', 'light', 'colorblind'];
 
@@ -47,6 +49,8 @@ function App() {
           >
             Brainrot
           </NavLink>
+          <NavLink to="/history">Past sessions</NavLink>
+          <NavLink to="/nutrition">Nutrition</NavLink>
         </nav>
 
         <div>
@@ -56,6 +60,8 @@ function App() {
             <Route path="/signup" element={<Signup />} />
             <Route path="/brainrot" element={<Brainrot />} />
             <Route path="/session" element={<Session />} />
+            <Route path="/history" element={<WorkoutHistory />} />
+            <Route path="/nutrition" element={<Nutrition />} />
           </Routes>
         </div>
       </div>

@@ -49,7 +49,7 @@ export function saveWorkout(user, workout) {
   const sessions = loadWorkouts(user);
   const snapshot = JSON.parse(JSON.stringify({
     ...workout,
-    id: globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    id: window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`,
     savedAt: new Date().toISOString(),
   }));
   try {
