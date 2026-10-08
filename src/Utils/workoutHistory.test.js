@@ -53,3 +53,52 @@ test('calendar handles leap years, year boundaries and local dates', () => {
   expect(february.length % 7).toBe(0);
   expect(monthDays(new Date(2025, 12, 1))).toContain('2026-01-01');
 });
+
+
+test.each([
+  ['missing session name', value => { value.name = ' '; }],
+  ['missing exercise name', value => { value.exercises[0].name = ''; }],
+  ['missing exercises', value => { value.exercises = []; }],
+  ['missing sets', value => { value.exercises[0].sets = []; }],
+  ['negative weight', value => { value.exercises[0].sets[0].weight = -1; }],
+  ['non-finite weight', value => { value.exercises[0].sets[0].weight = Infinity; }],
+  ['missing weight', value => { value.exercises[0].sets[0].weight = NaN; }],
+  ['zero reps', value => { value.exercises[0].sets[0].reps = 0; }],
+  ['negative reps', value => { value.exercises[0].sets[0].reps = -1; }],
+  ['fractional reps', value => { value.exercises[0].sets[0].reps = 2.5; }],
+  ['invalid date', value => { value.date = 'not-a-date'; }],
+  ['missing date', value => { value.date = ''; }],
+  ['invalid unit', value => { value.unit = 'stones'; }],
+  ['invalid body weight', value => { value.bodyWeight = 0; }],
+])('rejects %s without changing saved data', (_, change) => {
+  saveWorkout('alice', workout());
+  const original = localStorage.getItem('osc-workout-history:alice');
+  const invalid = workout();
+  change(invalid);
+  expect(() => saveWorkout('alice', invalid)).toThrow();
+  expect(localStorage.getItem('osc-workout-history:alice')).toBe(original);
+});
+
+test.each([null, [], {}, { version: 2, sessions: [] }, { version: 1, sessions: [{}] },
+  { version: 1, sessions: [{ ...workout(), id: '' }] },
+  { version: 1, sessions: [{ ...workout(), id: 'same' }, { ...workout(), id: 'same' }] },
+])('rejects malformed stored data %# without overwriting it', data => {
+  const original = JSON.stringify(data);
+  localStorage.setItem('osc-workout-history:alice', original);
+  expect(() => loadWorkouts('alice')).toThrow('could not be read');
+  expect(() => saveWorkout('alice', workout())).toThrow('left unchanged');
+  expect(localStorage.getItem('osc-workout-history:alice')).toBe(original);
+});
+
+test('reports storage read failures', () => {
+  const spy = jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error(); });
+  expect(() => loadWorkouts('alice')).toThrow('could not be read');
+  expect(() => saveWorkout('alice', workout())).toThrow('left unchanged');
+  spy.mockRestore();
+});
+
+test('calendar preserves four-digit years below 100', () => {
+  expect(isValidDay('0001-01-01')).toBe(true);
+  expect(isValidDay('0000-01-01')).toBe(false);
+  expect(monthDays(new Date('0099-12-01T12:00:00'))).toContain('0099-12-31');
+});

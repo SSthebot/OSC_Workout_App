@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { getCurrentUser } from '../Utils/streak';
 import { dayKey, isValidDay, loadWorkouts, monthDays } from '../Utils/workoutHistory';
@@ -10,7 +9,7 @@ const fullDate = day => asDate(day).toLocaleDateString(undefined, { weekday: 'lo
 export default function WorkoutHistory() {
   const [params, setParams] = useSearchParams();
   const selected = isValidDay(params.get('date')) ? params.get('date') : dayKey();
-  const [month, setMonth] = useState(() => new Date(asDate(selected).getFullYear(), asDate(selected).getMonth(), 1));
+  const month = asDate(`${selected.slice(0, 7)}-01`);
   const user = getCurrentUser();
   let sessions = [];
   let error = '';
@@ -23,10 +22,14 @@ export default function WorkoutHistory() {
     return days;
   }, {});
 
+  function changeMonth(offset) {
+    const next = new Date(month);
+    next.setMonth(next.getMonth() + offset);
+    setParams({ date: dayKey(next) });
+  }
+
   function today() {
-    const now = new Date();
-    setMonth(new Date(now.getFullYear(), now.getMonth(), 1));
-    setParams({ date: dayKey(now) });
+    setParams({ date: dayKey() });
   }
 
   return (
@@ -40,9 +43,9 @@ export default function WorkoutHistory() {
           {!error && sessions.length === 0 && <p>No saved workouts yet. Your completed sessions will appear here.</p>}
           <section aria-label="Workout calendar">
             <div className="calendar-toolbar">
-              <button aria-label="Previous month" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}>←</button>
+              <button aria-label="Previous month" disabled={selected.startsWith('0001-01')} onClick={() => changeMonth(-1)}>←</button>
               <h2 aria-live="polite">{month.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</h2>
-              <button aria-label="Next month" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}>→</button>
+              <button aria-label="Next month" disabled={selected.startsWith('9999-12')} onClick={() => changeMonth(1)}>→</button>
               <button onClick={today}>Today</button>
             </div>
             <div className="calendar-grid">

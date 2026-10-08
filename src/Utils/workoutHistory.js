@@ -1,15 +1,15 @@
 export function dayKey(date = new Date()) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  return `${String(date.getFullYear()).padStart(4, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
 export function isValidDay(value) {
   if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const date = new Date(`${value}T12:00:00`);
-  return !Number.isNaN(date.getTime()) && dayKey(date) === value;
+  return !Number.isNaN(date.getTime()) && date.getFullYear() >= 1 && dayKey(date) === value;
 }
 
 function storageKey(user) {
-  if (!user || !user.trim()) throw new Error('Log in to save and view your workouts.');
+  if (typeof user !== 'string' || !user.trim()) throw new Error('Log in to save and view your workouts.');
   return `osc-workout-history:${user.trim().toLowerCase()}`;
 }
 
@@ -33,9 +33,11 @@ export function loadWorkouts(user) {
     if (raw === null) return [];
     const data = JSON.parse(raw);
     if (data.version !== 1 || !Array.isArray(data.sessions)) throw new Error();
+    const ids = new Set();
     data.sessions.forEach(session => {
       validate(session);
-      if (typeof session.id !== 'string') throw new Error();
+      if (typeof session.id !== 'string' || !session.id.trim() || ids.has(session.id)) throw new Error();
+      ids.add(session.id);
     });
     return data.sessions;
   } catch {
@@ -61,10 +63,17 @@ export function saveWorkout(user, workout) {
 }
 
 export function monthDays(month) {
-  const first = new Date(month.getFullYear(), month.getMonth(), 1);
-  const count = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+  const first = new Date(month);
+  first.setDate(1);
+  const last = new Date(first);
+  last.setMonth(last.getMonth() + 1, 0);
+  const count = last.getDate();
   const cells = Array(first.getDay()).fill(null);
-  for (let day = 1; day <= count; day++) cells.push(dayKey(new Date(month.getFullYear(), month.getMonth(), day)));
+  for (let day = 1; day <= count; day++) {
+    const date = new Date(first);
+    date.setDate(day);
+    cells.push(dayKey(date));
+  }
   while (cells.length % 7) cells.push(null);
   return cells;
 }

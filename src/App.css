@@ -28,3 +28,4 @@
 }
 
 nav a { color: var(--accent-1);}
+.App > nav { display: flex; flex-wrap: wrap; justify-content: center; gap: .75rem; padding: .75rem; }

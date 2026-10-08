@@ -1,10 +1,10 @@
 import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { MemoryRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import Session from './Session';
 import WorkoutHistory from './WorkoutHistory';
 import { setCurrentUser } from '../Utils/streak';
-import { loadWorkouts, saveWorkout } from '../Utils/workoutHistory';
+import { dayKey, loadWorkouts, saveWorkout } from '../Utils/workoutHistory';
 
 let container;
 let root;
@@ -23,6 +23,7 @@ afterEach(() => {
 function render(path) {
   act(() => root.render(
     <MemoryRouter initialEntries={[path]} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <HistoryButtons />
       <Routes><Route path="/session" element={<Session />} /><Route path="/history" element={<WorkoutHistory />} /></Routes>
     </MemoryRouter>
   ));
@@ -91,4 +92,53 @@ test('history requires login and does not show another user’s sessions', () =>
   render('/history?date=2025-10-02');
   expect(container.textContent).toContain('No saved workouts yet');
   expect(container.textContent).not.toContain('Private leg day');
+});
+
+function HistoryButtons() {
+  const navigate = useNavigate();
+  return <><button id="back" onClick={() => navigate(-1)}>Back</button><button id="forward" onClick={() => navigate(1)}>Forward</button></>;
+}
+
+test('month, selected date and Today follow Back and Forward', () => {
+  setCurrentUser('Alice');
+  render('/history?date=2025-12-31');
+  click('[aria-label="Next month"]');
+  expect(container.querySelector('.calendar-toolbar h2')).toHaveTextContent('January 2026');
+  expect(container.querySelector('.calendar-day[aria-pressed="true"]')).toHaveTextContent('1');
+  click('#back');
+  expect(container.querySelector('.calendar-toolbar h2')).toHaveTextContent('December 2025');
+  expect(container.querySelector('.calendar-day[aria-pressed="true"]')).toHaveTextContent('31');
+  click('#forward');
+  expect(container.querySelector('.calendar-toolbar h2')).toHaveTextContent('January 2026');
+  act(() => [...container.querySelectorAll('button')].find(button => button.textContent === 'Today').click());
+  expect(container.querySelector('[aria-current="date"]')).toHaveAttribute('aria-pressed', 'true');
+  click('#back');
+  expect(container.querySelector('.calendar-toolbar h2')).toHaveTextContent('January 2026');
+});
+
+test('invalid query dates fall back to today', () => {
+  setCurrentUser('Alice');
+  render('/history?date=2025-02-30');
+  expect(container.querySelector('[aria-current="date"]')).toHaveAttribute('aria-pressed', 'true');
+  expect(container.querySelector('.calendar-toolbar h2')).toHaveTextContent(new Date(`${dayKey()}T12:00:00`).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }));
+});
+
+test('rejects saving after another user logs in without losing the draft', () => {
+  setCurrentUser('Alice');
+  render('/session');
+  fillWorkout();
+  setCurrentUser('Bob');
+  submit();
+  expect(container.querySelector('[role="alert"]')).toHaveTextContent('logged-in user changed');
+  expect(loadWorkouts('Alice')).toEqual([]);
+  expect(loadWorkouts('Bob')).toEqual([]);
+  expect(container.querySelector('input[placeholder="Leg day"]').value).toBe('Leg day');
+});
+
+test('shows unreadable history and preserves its original contents', () => {
+  setCurrentUser('Alice');
+  localStorage.setItem('osc-workout-history:alice', 'invalid');
+  render('/history');
+  expect(container.querySelector('[role="alert"]')).toHaveTextContent('could not be read');
+  expect(localStorage.getItem('osc-workout-history:alice')).toBe('invalid');
 });

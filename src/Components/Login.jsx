@@ -15,6 +15,7 @@ function Login() {
     const [user, setUser] = useState(getCurrentUser());
     const [username, setUsername] = useState('');
     const [usedFreeze, setUsedFreeze] = useState(false);
+    const [error, setError] = useState('');
 
     const handleLogin = (event) => {
         event.preventDefault();
@@ -22,17 +23,27 @@ function Login() {
         if (!name) return;
 
         // logging in records today's entry and bumps the streak
-        const result = recordLogin(name);
-        setUsedFreeze(Boolean(result.usedFreeze));
-        setCurrentUser(name);
-        setUser(name);
-        setUsername('');
+        try {
+            const result = recordLogin(name);
+            setCurrentUser(name);
+            setUsedFreeze(Boolean(result.usedFreeze));
+            setUser(name);
+            setUsername('');
+            setError('');
+        } catch {
+            setError('Login could not be saved. Browser storage may be full or unavailable.');
+        }
     };
 
     const handleLogout = () => {
-        clearCurrentUser();
-        setUser(null);
-        setUsedFreeze(false);
+        try {
+            clearCurrentUser();
+            setUser(null);
+            setUsedFreeze(false);
+            setError('');
+        } catch {
+            setError('Logout could not be saved. Browser storage is unavailable.');
+        }
     };
 
     if (user) {
@@ -49,6 +60,7 @@ function Login() {
                 <p>❄️ Freezes: {freezes}</p>
                 {usedFreeze && <p>You missed a day, so a freeze saved your streak.</p>}
                 {milestone && <p>{milestone}</p>}
+                {error && <p role="alert">{error}</p>}
                 <button className="auth-begin-button" onClick={handleLogout}>Log out</button>
             </div>
         );
@@ -57,6 +69,7 @@ function Login() {
     return (
         <div className="auth-root">
             <h2>Login</h2>
+            {error && <p role="alert">{error}</p>}
             <form onSubmit={handleLogin}>
                 <input
                     type="text"

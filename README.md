@@ -110,3 +110,13 @@ snapshot of every set. It persists across reloads on the same browser but does n
 sync between devices. Clearing browser data removes it. Usernames are local
 profiles, not authenticated accounts. Storage errors are displayed without
 clearing the workout form or overwriting unreadable history.
+
+This is a custom calendar; it does not use a calendar API or external calendar
+service. Username-based separation is not secure authentication: anyone using the
+same browser can enter the same username or inspect its local storage. Do not
+store sensitive information. Calendar month changes and day selections are kept
+in the URL so refresh and browser Back/Forward restore the selected day and month.
+
+The existing exercise library is available under **Workouts**. Its ExerciseDB
+request requires a `REACT_APP_RAPIDAPI_KEY`; this is separate from the calendar,
+which needs no API key.
