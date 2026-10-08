@@ -110,7 +110,11 @@ export function getLoginEntries(username) {
 }
 
 export function getCurrentUser() {
-    return localStorage.getItem(CURRENT_USER_KEY);
+    try {
+        return localStorage.getItem(CURRENT_USER_KEY);
+    } catch {
+        return null;
+    }
 }
 
 export function setCurrentUser(username) {
